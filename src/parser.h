@@ -223,7 +223,21 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
 }
 
 static std::unique_ptr<ExprAST> ParseIfExpr() {
-    return nullptr;
+    getNextToken();
+    auto condition = ParseExpression();
+    if(CurTok!=tok_then){
+        //check then
+        return nullptr;
+    }
+    getNextToken();
+    auto then_block = ParseExpression();
+    if(CurTok!=tok_else){
+        //check else
+        return nullptr;
+    }
+    getNextToken();
+    auto else_block = ParseExpression();
+    return llvm::make_unique<IfExprAST>(std::move(condition),std::move(then_block),std::move(else_block));
     // TODO 3.3: If文のパーシングを実装してみよう。
     // 1. ParseIfExprに来るということは現在のトークンが"if"なので、
     // トークンを次に進めます。

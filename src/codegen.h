@@ -81,6 +81,8 @@ Value *BinaryAST::codegen() {
             return Builder.CreateSub(L, R, "subtmp");
         case '*':
             return Builder.CreateMul(L, R, "multmp");
+        case '<':
+            return Builder.CreateIntCast(Builder.CreateICmp(llvm::CmpInst::ICMP_SLT,L,R,"slttmp"),Builder.getInt64Ty(),true,"cast_i1_to_i64");
         // TODO 3.1: '<'を実装してみよう
         // '<'のcodegenを実装して下さい。その際、以下のIRBuilderのメソッドが使えます。
         // CreateICmp: https://llvm.org/doxygen/classllvm_1_1IRBuilder.html#a103d309fa238e186311cbeb961b5bcf4
@@ -185,7 +187,19 @@ Value *IfExprAST::codegen() {
     // TODO 3.4: "else"ブロックのcodegenを実装しよう
     // "then"ブロックを参考に、"else"ブロックのcodegenを実装して下さい。
     // 注意: 20行下のコメントアウトを外して下さい。
-    ParentFunc->getBasicBlockList().push_back(ElseBB);
+
+    // "else"のブロックを作り、その内容(expression)をcodegenする。
+    Builder.SetInsertPoint(ElseBB);
+    Value *ElseV = Then->codegen();
+    if (!ElseV)
+        return nullptr;
+    // "then"のブロックから出る時は"ifcont"ブロックに飛ぶ。
+    Builder.CreateBr(MergeBB);
+    // ThenBBをアップデートする。
+    ElseBB = Builder.GetInsertBlock();
+
+
+    ParentFunc->getBasicBlockList().push_back(ElseBB);//コメントアウトを外すのはこの行
 
     // "ifcont"ブロックのcodegen
     ParentFunc->getBasicBlockList().push_back(MergeBB);
@@ -202,7 +216,7 @@ Value *IfExprAST::codegen() {
 
     PN->addIncoming(ThenV, ThenBB);
     // TODO 3.4:を実装したらコメントアウトを外して下さい。
-    // PN->addIncoming(ElseV, ElseBB);
+    PN->addIncoming(ElseV, ElseBB);
     return PN;
 }
 
