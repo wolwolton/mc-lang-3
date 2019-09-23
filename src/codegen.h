@@ -190,7 +190,7 @@ Value *IfExprAST::codegen() {
 
     // "else"のブロックを作り、その内容(expression)をcodegenする。
     Builder.SetInsertPoint(ElseBB);
-    Value *ElseV = Then->codegen();
+    Value *ElseV = Else->codegen();
     if (!ElseV)
         return nullptr;
     // "then"のブロックから出る時は"ifcont"ブロックに飛ぶ。
