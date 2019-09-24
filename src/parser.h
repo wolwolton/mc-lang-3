@@ -115,10 +115,18 @@ static int getNextToken() { return CurTok = lexer.gettok(); }
 // 二項演算子の結合子をmc.cppで定義している。
 static std::map<char, int> BinopPrecedence;
 
+int isBinOp(char tok){
+    if(BinopPrecedence.count(tok)==0){
+        return false;
+    }else{
+        return true;
+    }
+}
+
 // GetTokPrecedence - 二項演算子の結合度を取得
 // もし現在のトークンが二項演算子ならその結合度を返し、そうでないなら-1を返す。
 static int GetTokPrecedence() {
-    if (!isascii(CurTok))
+    if (!isBinOp(CurTok))
         return -1;
 
     int tokprec = BinopPrecedence[CurTok];

@@ -89,6 +89,12 @@ Value *BinaryAST::codegen() {
         // llvm::CmpInst::ICMP_SLT: https://llvm.org/doxygen/classllvm_1_1CmpInst.html#a283f9a5d4d843d20c40bb4d3e364bb05
         // CreateIntCast: https://llvm.org/doxygen/classllvm_1_1IRBuilder.html#a5bb25de40672dedc0d65e608e4b78e2f
         // CreateICmpの返り値がi1(1bit)なので、CreateIntCastはそれをint64にcastするのに用います。
+        case tok_sle:
+            return Builder.CreateIntCast(Builder.CreateICmp(llvm::CmpInst::ICMP_SLE,L,R,"sletmp"),Builder.getInt64Ty(),true,"cast_i1_to_i64");
+        case '>':
+            return Builder.CreateIntCast(Builder.CreateICmp(llvm::CmpInst::ICMP_SGT,L,R,"sgttmp"),Builder.getInt64Ty(),true,"cast_i1_to_i64");
+        case tok_sge:
+            return Builder.CreateIntCast(Builder.CreateICmp(llvm::CmpInst::ICMP_SGE,L,R,"sgetmp"),Builder.getInt64Ty(),true,"cast_i1_to_i64");
         default:
             return LogErrorV("invalid binary operator");
     }

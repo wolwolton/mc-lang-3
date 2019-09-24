@@ -15,7 +15,9 @@ enum Token {
     tok_number = -4,
     tok_if = -5,
     tok_then = -6,
-    tok_else = -7
+    tok_else = -7,
+    tok_sge = -8,
+    tok_sle = -9
 };
 
 class Lexer {
@@ -103,8 +105,20 @@ class Lexer {
             // tok_numberでもtok_eofでもなければそのcharのasciiを返す
             int thisChar = lastChar;
             lastChar = getNextChar(iFile);
+            std::string op;
+            op = (char)thisChar;
+            op += lastChar;
+            if(op=="<="){
+                lastChar = getNextChar(iFile);
+                return tok_sle;
+            }
+            if(op==">="){
+                lastChar = getNextChar(iFile);
+                return tok_sge;
+            }
             return thisChar;
         }
+        
 
         // 数字を格納するnumValのgetter, setter
         uint64_t getNumVal() { return numVal; }

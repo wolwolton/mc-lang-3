@@ -52,6 +52,7 @@ Lexer lexer;
 // コンパイラのインターフェースをドライバーと言ったりしますが、このメイン関数がまさにそれです。
 //===----------------------------------------------------------------------===//
 
+
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         std::cout << "./mc file.mc" << std::endl;
@@ -70,6 +71,9 @@ int main(int argc, char *argv[]) {
     BinopPrecedence['-'] = 20;
     BinopPrecedence['*'] = 40;
     BinopPrecedence['<'] = 10;
+    BinopPrecedence['>'] = 10;
+    BinopPrecedence[tok_sge] = 10;
+    BinopPrecedence[tok_sle] = 10;
 
     getNextToken();
 
