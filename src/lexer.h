@@ -27,7 +27,7 @@ class Lexer {
         // '+'や他のunknown tokenだった場合はそのascii codeを返す。
         int gettok() {
             static int lastChar = getNextChar(iFile);
-
+            static int lastTok = tok_eof;
             // スペースをスキップ
             while (isspace(lastChar))
                 lastChar = getNextChar(iFile);
@@ -43,16 +43,16 @@ class Lexer {
                     identifierStr += lastChar;
 
                 if (identifierStr == "def")
-                    return tok_def;
+                    return setTok(tok_def,lastTok);
                 // TODO 3.2: "if", "then", "else"をトークナイズしてみよう
                 // 上記の"def"の例を参考に、3つの予約語をトークナイズして下さい。
                 if (identifierStr == "if")
-                    return tok_if;
+                    return setTok(tok_if,lastTok);
                 if (identifierStr == "then")
-                    return tok_then;
+                    return setTok(tok_then,lastTok);
                 if (identifierStr == "else")
-                    return tok_else;
-                return tok_identifier;
+                    return setTok(tok_else,lastTok);
+                return setTok(tok_identifier,lastTok);
             }
 
             // TODO 1.3: 数字のパーシングを実装してみよう
@@ -72,13 +72,18 @@ class Lexer {
             //
             // ここに実装して下さい
             if (isdigit(lastChar)) {
-                std::string numStr = "";
-                numStr += lastChar;
-                while (isdigit(lastChar = getNextChar(iFile)))
-                    numStr += lastChar;
-                setnumVal(strtod(numStr.c_str(), nullptr));
-                return tok_number;
+                return setTok(parseNum(iFile,lastChar), lastTok);
+
+            }else if(lastChar == '-'){
+                if(lastTok == tok_identifier || lastTok == tok_number){
+                    lastChar = getNextChar(iFile);
+                    return setTok('-',lastTok);
+                    //この場合は'-'は演算子
+                }
+                lastChar = getNextChar(iFile);
+                return setTok(parseNum(iFile,lastChar,'-'), lastTok);
             }
+
 
             // TODO 1.4: コメントアウトを実装してみよう
             // '#'を読んだら、その行の末尾まで無視をするコメントアウトを実装する。
@@ -100,7 +105,7 @@ class Lexer {
 
             // EOFならtok_eofを返す
             if (iFile.eof())
-                return tok_eof;
+                return setTok(tok_eof,lastTok);
 
             // tok_numberでもtok_eofでもなければそのcharのasciiを返す
             int thisChar = lastChar;
@@ -110,15 +115,14 @@ class Lexer {
             op += lastChar;
             if(op=="<="){
                 lastChar = getNextChar(iFile);
-                return tok_sle;
+                return setTok(tok_sle,lastTok);
             }
             if(op==">="){
                 lastChar = getNextChar(iFile);
-                return tok_sge;
+                return setTok(tok_sge,lastTok);
             }
-            return thisChar;
+            return setTok(thisChar,lastTok);
         }
-        
 
         // 数字を格納するnumValのgetter, setter
         uint64_t getNumVal() { return numVal; }
@@ -142,4 +146,39 @@ class Lexer {
 
             return c;
         }
+        int parseNum(std::ifstream &is,int &lc,char sign = '+'){
+                std::string numStr = "";
+                numStr += sign;
+                numStr += lc;
+                while (isdigit(lc = getNextChar(is))){
+                    numStr += lc;
+                }
+                if(lc=='.'){
+                    numStr+=lc;
+                    lc = getNextChar(is);
+                }
+                while (isdigit(lc)){
+                    numStr += lc;
+                    lc = getNextChar(is);
+                }
+                if(lc=='e' || lc=='E'){
+                    numStr+=lc;
+                    lc = getNextChar(is);   
+                    if(lc=='+' || lc=='-'){
+                        numStr+=lc;
+                        lc = getNextChar(is);
+                    }
+                    while (isdigit(lc)){
+                        numStr += lc;
+                        lc = getNextChar(is);
+                    }
+                }
+                //std::cout<< "Parse Num :" << numStr << std::endl;
+                setnumVal(strtod(numStr.c_str(), nullptr));
+                return tok_number;
+            }
+            int setTok(int NextTok, int &lT){
+                lT = NextTok;
+                return NextTok;
+            }
         };
