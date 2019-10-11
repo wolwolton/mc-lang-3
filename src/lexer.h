@@ -6,6 +6,7 @@
 // 全体的な流れとしては、gettokをParserから呼ぶことにより「次のトークン」を読み、
 // それが数値リテラルだった場合はnumValという変数にセットする。
 //===----------------------------------------------------------------------===//
+#include <regex>
 
 // このLexerでは、EOF、数値、"def"、識別子以外は[0-255]を返す('+'や'-'を含む)。
 enum Token {
@@ -29,6 +30,7 @@ class Lexer {
             static int lastChar = getNextChar(iFile);
             static int lastTok = tok_eof;
             // スペースをスキップ
+            std::cout << "Cur is:"<<(char)lastChar << std::endl;
             while (isspace(lastChar))
                 lastChar = getNextChar(iFile);
 
@@ -72,7 +74,7 @@ class Lexer {
             //
             // ここに実装して下さい
             if (isdigit(lastChar)) {
-                return setTok(parseNum(iFile,lastChar), lastTok);
+                return setTok(parseNum2(iFile,lastChar), lastTok);
 
             }else if(lastChar == '-'){
                 if(lastTok == tok_identifier || lastTok == tok_number){
@@ -81,7 +83,7 @@ class Lexer {
                     //この場合は'-'は演算子
                 }
                 lastChar = getNextChar(iFile);
-                return setTok(parseNum(iFile,lastChar,'-'), lastTok);
+                return setTok(parseNum2(iFile,lastChar,'-'), lastTok);
             }
 
 
@@ -89,7 +91,7 @@ class Lexer {
             // '#'を読んだら、その行の末尾まで無視をするコメントアウトを実装する。
             // 1. 今の文字(LastChar)が'#'かどうかをチェック
             // 2. lastCharに次のトークンを読み込む(getNextChar(iFile)を使う)
-            // 3. lastCharが'\n'か、EOFになるまで読み込む。e.g. while(lastChar != EOF && lastChar != '\n')
+            // 3. lastCharが'\n'か、EOFになるまで読み込む。e.g. whi2le(lastChar != EOF && lastChar != '\n')
             // 4. lastCharがEOFでない場合、行末まで読み込んだので次のトークンに進むためにgettok()をreturnする。
             //
             // ここに実装して下さい
@@ -121,6 +123,7 @@ class Lexer {
                 lastChar = getNextChar(iFile);
                 return setTok(tok_sge,lastTok);
             }
+            std::cout << "Not <= :" <<(char)lastChar << std::endl;
             return setTok(thisChar,lastTok);
         }
 
@@ -146,6 +149,7 @@ class Lexer {
 
             return c;
         }
+        
         int parseNum(std::ifstream &is,int &lc,char sign = '+'){
                 std::string numStr = "";
                 numStr += sign;
@@ -177,8 +181,30 @@ class Lexer {
                 setnumVal(strtod(numStr.c_str(), nullptr));
                 return tok_number;
             }
+            int parseNum2(std::ifstream &is,int &lc,char sign = '+'){
+                std::string numStr = "";
+                numStr += sign;
+                while (true){
+                    numStr +=lc;
+                    lc = getNextChar(is);if(!isdigit(lc) && lc!='.' && lc!='e' && lc!='E'){
+                        if(isdigit(numStr.back())){
+                            break;
+                        }
+                    }
+                }
+                std::regex re(R"([+|-]?[0-9]+(\.[0-9]+)?([e|E][+|-]?[0-9]+)?)");
+                std::smatch match;
+                if(std::regex_match(numStr,match,re)){
+                    setnumVal(strtod(numStr.c_str(), nullptr));
+                    //std::cout<< "Parse Num :" << numStr << std::endl;
+                    return tok_number;
+                }
+                return lc;
+            }
+
             int setTok(int NextTok, int &lT){
                 lT = NextTok;
                 return NextTok;
             }
         };
+        

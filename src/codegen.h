@@ -33,10 +33,18 @@ Value *LogErrorV(const char *str) {
 Value *VariableExprAST::codegen() {
     // NamedValuesの中にVariableExprAST::NameとマッチするValueがあるかチェックし、
     // あったらそのValueを返す。
+    std::cout << "変数参照のcodegen :" << variableName << std::endl;
     Value *V = NamedValues[variableName];
     if (!V)
         return LogErrorV("Unknown variable name");
     return V;
+}
+
+//変数の代入のcodegen
+Value *VariableAssignmentAst::codegen() {
+    std::cout << "変数のcodegen: " << variableName << std::endl;
+    NamedValues[variableName] = RHS->codegen();
+    return nullptr;
 }
 
 // TODO 2.5: 関数呼び出しのcodegenを実装してみよう
@@ -132,6 +140,7 @@ Function *FunctionAST::codegen() {
     Builder.SetInsertPoint(BB);
 
     // Record the function arguments in the NamedValues map.
+    std::cout << "clear NamedValues" << std::endl;
     NamedValues.clear();
     for (auto &Arg : function->args())
         NamedValues[Arg.getName()] = &Arg;

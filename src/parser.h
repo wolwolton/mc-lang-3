@@ -48,6 +48,17 @@ namespace {
         Value *codegen() override;
     };
 
+    class VariableAssignmentAst : public ExprAST{
+        std::string variableName;
+        std::unique_ptr<ExprAST> RHS;
+
+        public:
+        VariableAssignmentAst(const std::string &variableName, std::unique_ptr<ExprAST> RHS)
+            : variableName(variableName), RHS(std::move(RHS)) {}
+
+        Value *codegen() override;
+    };
+
     // CallExprAST - 関数呼び出しを表すクラス
     class CallExprAST : public ExprAST {
         std::string callee;
@@ -193,6 +204,11 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     // 2. トークンを次に進める。
     getNextToken();
 
+    if(CurTok == '='){
+        getNextToken();
+        auto R = ParseExpression();
+        return llvm::make_unique<VariableAssignmentAst>(IdName, std::move(R));
+    }
     // 3. 次のトークンが'('の場合は関数呼び出し。そうでない場合は、
     // VariableExprASTを識別子を入れてインスタンス化し返す。
     if (CurTok != '(')
@@ -363,6 +379,7 @@ static std::unique_ptr<FunctionAST> ParseDefinition() {
 
 // ExprASTは1. 数値リテラル 2. '('から始まる演算 3. 二項演算子の三通りが考えられる為、
 // 最初に1,2を判定して、そうでなければ二項演算子だと思う。
+// 加えて4.変数（の定義or代入）が考えられる。4は先にチェック
 static std::unique_ptr<ExprAST> ParseExpression() {
     auto LHS = ParsePrimary();
     if (!LHS)
